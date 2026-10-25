@@ -1,97 +1,57 @@
-
--- Users
 CREATE TABLE user (
- userKey decimal(9,0) not null,
- user char(20) not null,
+ username char(20) not null,
  password char(20) not null,
- joinDate date not null
- PRIMARY KEY (userKey, user)
+ PRIMARY KEY (username)
 );
 
--- For creating posts
-CREATE TABLE post (
- postKey decimal(9,0) not null,
- postTime date not null,
- postById decimal (9,0) not null
- PRIMARY KEY (postKey)
-
+CREATE TABLE artifact (
+ artifact_id decimal(9, 0) not null,
+ views integer not null,
+ username char(20) not null, -- CreatedArtifact
+ PRIMARY KEY (artifact_id)
 );
 
--- This is for the filters to a post, need to add more filters down the road
-CREATE TABLE postFilters (
- postFiltersKey decimal(9,0) not null,
- wikipedia BOOLEAN,
- britanina BOOLEAN,
- PRIMARY KEY (postFiltersKey)
+CREATE TABLE message (
+ artifact_id decimal(9, 0) not null,
+ topic_id decimal(9, 0) not null, -- MessageIn
+ -- char and varchar have very limited length
+ content text not null
 );
 
--- M to M relationship for users to posts
-CREATE TABLE joinedPosts (
- userID decimal(9,0) not null,
- postID decimal(9,0) not null
-
+CREATE TABLE externalrecord (
+ artifact_id decimal(9, 0) not null,
+ external_database_id decimal(9, 0) not null,
+ external_identifier varchar(200) not null
 );
 
--- External sources, isa relationships
-CREATE TABLE externalSource (
- externalID decimal (9,0) not null,
- typeOf char(20) not null,
- PRIMARY KEY(externalID)
+CREATE TABLE topic (
+ topic_id decimal(9, 0) not null,
+ username char(20) not null, -- CreatedTopic
+ PRIMARY KEY (topic_id)
 );
 
-CREATE TABLE books (
- isbn decimal (9,0) not null,
- title char(60) not null,
- shareDay decimal(9,0) not null,
- shareWeek decimal(9,0) not null,
- shareMonth decimal(9,0) not null,
- PRIMARY KEY(isbn)
+CREATE TABLE forumthread (
+ topic_id decimal(9, 0) not null,
+ artifact_id decimal(9, 0) not null -- RootMessage
 );
 
-CREATE TABLE webpage (
- webpageID decimal(9,0) not null,
- url char(100) not null,
- domain char(60) not null,
- shareDay decimal(9,0) not null,
- shareWeek decimal(9,0) not null,
- shareMonth decimal(9,0) not null,
- PRIMARY KEY(webpageID)
-);
--- following 3 are isa relationships, just a "main filters" and "other" articles
-CREATE TABLE wikipedia (
- wikipediaID decimal(9,0) not null,
- lastEdit date not null,
- PRIMARY KEY(lastEdit)
+CREATE TABLE externaldatabase (
+ external_database_id decimal(9, 0) not null,
+ PRIMARY KEY(external_database_id)
 );
 
-CREATE TABLE britanica (
- britanicaID decimal(9,0) not null,
- datePublished date not null,
- PRIMARY KEY(lastEdit)
+CREATE TABLE follows (
+ follower char(20) not null,
+ following char(20) not null
 );
 
-CREATE TABLE otherDomians (
- domainName char(60) not null,
- datePublished date not null,
- pageID decimal(9,0) not null,
- PRIMARY KEY(pageID)
+CREATE TABLE likesartifact (
+ username char(20) not null,
+ artifact_id decimal(9, 0) not null
 );
 
--- Many to Many between users and websites
-CREATE TABLE favoritedPages (
- favoriteID decimal(9,0) not null,
- userID decimal(9,0) not null,
- webpageID decimal(9,0) not null,
- PRIMARY KEY(favoriteID)
+CREATE TABLE internallink (
+ artifact_1 decimal(9, 0) not null,
+ artifact_2 decimal(9, 0) not null,
+ link_type char(20) not null
 );
-
--- Many to Many between users and books
-CREATE TABLE favoritedBooks (
- favoriteID decimal(9,0) not null,
- userID decimal(9,0) not null,
- isbn decimal(9,0) not null,
- PRIMARY KEY(favoriteID)
-);
-
-
-
