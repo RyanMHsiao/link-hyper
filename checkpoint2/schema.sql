@@ -39,6 +39,13 @@ CREATE TABLE IF NOT EXISTS follows (
 	followtime datetime not null
 );
 
+CREATE TABLE IF NOT EXISTS block (
+	follower char(20) not null,
+	following char(20) not null,
+	followtime datetime not null
+);
+
+-- m:n article to user type relations
 CREATE TABLE IF NOT EXISTS likes (
 	username char(20) not null,
 	messageid decimal(0, 9) not null,
@@ -97,3 +104,20 @@ CREATE TABLE IF NOT EXISTS internallink (
 	fromvertex decimal(0, 9) not null,
 	tovertex decimal(0, 9) not null
 );
+
+-- These are leaderboards for most viewed article
+CREATE TABLE IF NOT EXISTS mostViewedDay (
+	vertexid decimal(0, 9) not null,
+	viewCount decimal(0, 9) not null
+);
+
+CREATE TABLE IF NOT EXISTS mostViewedWeek (
+	vertexid decimal(0, 9) not null,
+	viewCount decimal(0, 9) not null
+);
+
+CREATE TABLE IF NOT EXISTS mostViewedMonth (
+	vertexid decimal(0, 9) not null,
+	viewCount decimal(0, 9) not null
+);
+
