@@ -106,18 +106,11 @@ CREATE TABLE IF NOT EXISTS internallink (
 );
 
 -- These are leaderboards for most viewed article
-CREATE TABLE IF NOT EXISTS mostViewedDay (
+CREATE TABLE IF NOT EXISTS mostViewed (
 	vertexid decimal(0, 9) not null,
-	viewCount decimal(0, 9) not null
+	viewCountDay decimal(0, 9) not null,
+	viewCountWeek decimal(0, 9) not null,
+	viewCountMonth decimal(0, 9) not null,
 );
 
-CREATE TABLE IF NOT EXISTS mostViewedWeek (
-	vertexid decimal(0, 9) not null,
-	viewCount decimal(0, 9) not null
-);
-
-CREATE TABLE IF NOT EXISTS mostViewedMonth (
-	vertexid decimal(0, 9) not null,
-	viewCount decimal(0, 9) not null
-);
 
