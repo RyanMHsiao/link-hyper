@@ -10,24 +10,31 @@ import java.io.File;
 
 public class Populate {
 
+	// Unix time to use, incremented for each insertion
+	private int simTime = 1794395471;
+
     private void populateTable() {
         System.out.println("++++++++++++++++++++++++++++++++++");
         System.out.println("Populate table");
 
 		System.out.println("(TODO, only user for now)");
-		populateUser("generic_user", 50);
+		populateUser(50);
 
         System.out.println("++++++++++++++++++++++++++++++++++");
     }
 
-	private void populateUser(String prefix, int count) {
+	private void populateUser(int count) {
+		String countUserString = "SELECT COUNT(*) AS cnt FROM user";
 		String insertUserString  = "INSERT INTO user VALUES(?, ?, ?)";
 		try (Statement s = c.createStatement();
 				PreparedStatement insertUser = c.prepareStatement(insertUserString)) {
-			for (int i = 0; i < count; ++i) {
-				insertUser.setString(1, prefix + i);
-				insertUser.setString(2, "bad password " + i);
-				insertUser.setInt(3, 1794395471);
+			ResultSet countSet = s.executeQuery(countUserString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt"); // Not a key in this case
+			for (int i = 0; i < count; ++i, ++incrementingId) {
+				insertUser.setString(1, "user " + incrementingId);
+				insertUser.setString(2, "insecure " + incrementingId);
+				insertUser.setInt(3, simTime++);
 				insertUser.executeUpdate();
 			}
 			c.commit();
