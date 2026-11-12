@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS message (
 -- m:n social media type relations
 CREATE TABLE IF NOT EXISTS follows (
 	follower char(20) not null,
-	following char(20) not null,
+	followinguser char(20) not null,
 	followtime datetime not null,
 	PRIMARY KEY (follower, following)
 );
