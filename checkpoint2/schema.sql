@@ -103,11 +103,8 @@ CREATE TABLE IF NOT EXISTS arc (
 -- m:n catalogue type relations
 CREATE TABLE IF NOT EXISTS internallink (
 	internallinkid decimal(0, 9) not null,
-	arccanonid decimal(0, 9) not null,
 	arcid decimal(0, 9) not null,
-	fromvertexcanonid decimal(0, 9) not null,
 	fromvertexid decimal(0, 9) not null,
-	tovertexcanondid decimal(0, 9) not null,
 	tovertexid decimal(0, 9) not null,
 	creator char(20) not null,
 	createtime timestamp not null,
