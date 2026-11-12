@@ -10,32 +10,179 @@ import java.io.File;
 
 public class Populate {
 
-	// Unix time to use, incremented for each insertion
-	private int simTime = 1794395471;
-
     private void populateTable() {
         System.out.println("++++++++++++++++++++++++++++++++++");
         System.out.println("Populate table");
 
-		System.out.println("(TODO, only user for now)");
+		System.out.println("(TODO: write code to populate all tables)");
 		populateUser(50);
+		populateFollows(50);
+		// A quirk of the system is that a user may follow and block the same user
+		populateBlock(50);
+		populateVertexcanon(7);
+		populateArccanon(7);
+		populateVertex(50);
+		// TODO populateForumthread
+		// TODO populateMessage
+		// TODO populateLikes
+		// TODO populateFavorites
+		// TODO populateArc
+		// TODO populateInternalLink
 
         System.out.println("++++++++++++++++++++++++++++++++++");
     }
 
-	private void populateUser(int count) {
-		String countUserString = "SELECT COUNT(*) AS cnt FROM user";
-		String insertUserString  = "INSERT INTO user VALUES(?, ?, ?)";
+	// Unix time to use, incremented for each insertion
+	private int simTime = 1794395471;
+
+	// String.format is generally insecure for SQL, but in this file only
+	// literal values are used with String.format, which should be safe
+	private String countFormatString = "SELECT COUNT(*) AS cnt FROM %s";
+	private String randomUserPairsString =
+		"SELECT T1.username AS u1, T2.username AS u2\n" +
+		"FROM user AS T1, user AS T2\n" +
+		"WHERE u1 <> u2\n" +
+		"ORDER BY RANDOM() LIMIT ?";
+	private String randomUsersString = "SELECT username FROM user ORDER BY RANDOM() LIMIT ?";
+	private String randomCanonUserPairsFormatString =
+		"SELECT %1$scanonid, username\n" +
+		"FROM %1$scanon, user\n" +
+		"ORDER BY RANDOM() LIMIT ?";
+
+	private void populateUser(int insertCount) {
+		String countString = String.format(countFormatString, "user");
+		String insertString = "INSERT INTO user VALUES(?, ?, ?)";
 		try (Statement s = c.createStatement();
-				PreparedStatement insertUser = c.prepareStatement(insertUserString)) {
-			ResultSet countSet = s.executeQuery(countUserString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
 			countSet.next();
 			int incrementingId = countSet.getInt("cnt"); // Not a key in this case
-			for (int i = 0; i < count; ++i, ++incrementingId) {
-				insertUser.setString(1, "user " + incrementingId);
-				insertUser.setString(2, "insecure " + incrementingId);
-				insertUser.setInt(3, simTime++);
-				insertUser.executeUpdate();
+			for (int i = 0; i < insertCount; ++i, ++incrementingId) {
+				insert.setString(1, "user " + incrementingId);
+				insert.setString(2, "insecure " + incrementingId);
+				insert.setInt(3, simTime++);
+				insert.executeUpdate();
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateFollows(int insertCount) {
+		String insertString = "INSERT INTO follows VALUES(?, ?, ?)";
+		try (PreparedStatement query = c.prepareStatement(randomUserPairsString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setString(1, rs.getString("u1"));
+				insert.setString(2, rs.getString("u2"));
+				insert.setInt(3, simTime++);
+				insert.executeUpdate();
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateBlock(int insertCount) {
+		String insertString = "INSERT INTO block VALUES(?, ?, ?)";
+		try (PreparedStatement query = c.prepareStatement(randomUserPairsString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setString(1, rs.getString("u1"));
+				insert.setString(2, rs.getString("u2"));
+				insert.setInt(3, simTime++);
+				insert.executeUpdate();
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateVertexcanon(int insertCount) {
+		String countString = String.format(countFormatString, "vertexcanon");
+		String insertString = "INSERT INTO vertexcanon VALUES(?, ?, ?, ?)";
+		try (Statement s = c.createStatement();
+				PreparedStatement query = c.prepareStatement(randomUsersString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt");
+
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setInt(1, incrementingId);
+				insert.setString(2, "vertexcanon " + incrementingId);
+				insert.setString(3, rs.getString("username"));
+				insert.setInt(4, simTime++);
+				insert.executeUpdate();
+				incrementingId++;
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateArccanon(int insertCount) {
+		String countString = String.format(countFormatString, "arccanon");
+		String insertString = "INSERT INTO arccanon VALUES(?, ?, ?, ?)";
+		try (Statement s = c.createStatement();
+				PreparedStatement query = c.prepareStatement(randomUsersString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt");
+
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setInt(1, incrementingId);
+				insert.setString(2, "arccanon " + incrementingId);
+				insert.setString(3, rs.getString("username"));
+				insert.setInt(4, simTime++);
+				insert.executeUpdate();
+				incrementingId++;
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateVertex(int insertCount) {
+		String countString = String.format(countFormatString, "vertex");
+		String queryString = String.format(randomCanonUserPairsFormatString, "vertex");
+		String insertString = "INSERT INTO vertex VALUES(?, ?, ?, ?, ?, NULL, NULL)";
+		try (Statement s = c.createStatement();
+				PreparedStatement query = c.prepareStatement(queryString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt");
+
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setInt(1, incrementingId);
+				insert.setInt(2, rs.getInt("vertexcanonid"));
+				insert.setString(3, "vertex " + incrementingId);
+				insert.setString(4, rs.getString("username"));
+				insert.setInt(5, simTime++);
+				insert.executeUpdate();
+				incrementingId++;
 			}
 			c.commit();
 		} catch (Exception e) {
