@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS follows (
 	follower char(20) not null,
 	followinguser char(20) not null,
 	followtime datetime not null,
-	PRIMARY KEY (follower, following)
+	PRIMARY KEY (follower, followinguser)
 );
 
 CREATE TABLE IF NOT EXISTS block (
