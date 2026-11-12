@@ -14,7 +14,6 @@ public class Populate {
         System.out.println("++++++++++++++++++++++++++++++++++");
         System.out.println("Populate table");
 
-		System.out.println("(TODO: write code to populate all tables)");
 		populateUser(50);
 		populateFollows(50);
 		// A quirk of the system is that a user may follow and block the same user
@@ -22,12 +21,15 @@ public class Populate {
 		populateVertexcanon(7);
 		populateArccanon(7);
 		populateVertex(50);
-		// TODO populateForumthread
-		// TODO populateMessage
-		// TODO populateLikes
-		// TODO populateFavorites
-		// TODO populateArc
-		// TODO populateInternalLink
+		populateArc(50);
+		populateInternallink(50);
+		populateFavorites(50);
+		populateForumthread(7);
+		// Want possibility of multiple messages in a thread by one user
+		for (int i = 0; i < 10; ++i) {
+			populateMessage(10);
+		}
+		populateLikes(50);
 
         System.out.println("++++++++++++++++++++++++++++++++++");
     }
@@ -44,9 +46,10 @@ public class Populate {
 		"WHERE u1 <> u2\n" +
 		"ORDER BY RANDOM() LIMIT ?";
 	private String randomUsersString = "SELECT username FROM user ORDER BY RANDOM() LIMIT ?";
-	private String randomCanonUserPairsFormatString =
-		"SELECT %1$scanonid, username\n" +
-		"FROM %1$scanon, user\n" +
+	// Random user + id from some other relation
+	private String randomUserPlusFormatString =
+		"SELECT %1$sid, username\n" +
+		"FROM %1$s, user\n" +
 		"ORDER BY RANDOM() LIMIT ?";
 
 	private void populateUser(int insertCount) {
@@ -164,7 +167,7 @@ public class Populate {
 
 	private void populateVertex(int insertCount) {
 		String countString = String.format(countFormatString, "vertex");
-		String queryString = String.format(randomCanonUserPairsFormatString, "vertex");
+		String queryString = String.format(randomUserPlusFormatString, "vertexcanon");
 		String insertString = "INSERT INTO vertex VALUES(?, ?, ?, ?, ?, NULL, NULL)";
 		try (Statement s = c.createStatement();
 				PreparedStatement query = c.prepareStatement(queryString);
@@ -183,6 +186,168 @@ public class Populate {
 				insert.setInt(5, simTime++);
 				insert.executeUpdate();
 				incrementingId++;
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateArc(int insertCount) {
+		String countString = String.format(countFormatString, "arc");
+		String queryString = String.format(randomUserPlusFormatString, "arccanon");
+		String insertString = "INSERT INTO arc VALUES(?, ?, ?, ?, ?, ?)";
+		try (Statement s = c.createStatement();
+				PreparedStatement query = c.prepareStatement(queryString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt");
+
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setInt(1, incrementingId);
+				insert.setInt(2, rs.getInt("arccanonid"));
+				insert.setString(3, "arc " + incrementingId);
+				insert.setString(4, "...");
+				insert.setString(5, rs.getString("username"));
+				insert.setInt(6, simTime++);
+				insert.executeUpdate();
+				incrementingId++;
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateInternallink(int insertCount) {
+		String countString = String.format(countFormatString, "internallink");
+		String queryString =
+			"SELECT arcid, T1.vertexid AS v1, T2.vertexid AS v2, username\n" +
+			"FROM arc, vertex AS T1, vertex AS T2, user\n" +
+			"WHERE T1.vertexid <> T2.vertexid\n" +
+			"ORDER BY RANDOM() LIMIT ?";
+		String insertString = "INSERT INTO internallink VALUES(?, ?, ?, ?, ?, ?)";
+		try (Statement s = c.createStatement();
+				PreparedStatement query = c.prepareStatement(queryString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt");
+
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setInt(1, incrementingId);
+				insert.setInt(2, rs.getInt("arcid"));
+				insert.setInt(3, rs.getInt("v1"));
+				insert.setInt(4, rs.getInt("v2"));
+				insert.setString(5, rs.getString("username"));
+				insert.setInt(6, simTime++);
+				insert.executeUpdate();
+				incrementingId++;
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateFavorites(int insertCount) {
+		String queryString = String.format(randomUserPlusFormatString, "vertex");
+		String insertString = "INSERT INTO favorites VALUES(?, ?, ?)";
+		try (PreparedStatement query = c.prepareStatement(queryString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setString(1, rs.getString("username"));
+				insert.setInt(2, rs.getInt("vertexid"));
+				insert.setInt(3, simTime++);
+				insert.executeUpdate();
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateForumthread(int insertCount) {
+		String countString = String.format(countFormatString, "forumthread");
+		String queryString = String.format(randomUserPlusFormatString, "internallink");
+		String insertString = "INSERT INTO forumthread VALUES(?, ?, ?, ?, ?)";
+		try (Statement s = c.createStatement();
+				PreparedStatement query = c.prepareStatement(queryString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt");
+
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setInt(1, incrementingId);
+				insert.setString(2, "forumthread " + incrementingId);
+				insert.setString(3, rs.getString("username"));
+				insert.setInt(4, simTime++);
+				insert.setInt(5, rs.getInt("internallinkid"));
+				insert.executeUpdate();
+				incrementingId++;
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateMessage(int insertCount) {
+		String countString = String.format(countFormatString, "message");
+		String queryString = String.format(randomUserPlusFormatString, "forumthread");
+		String insertString = "INSERT INTO message VALUES(?, ?, ?, ?, ?)";
+		try (Statement s = c.createStatement();
+				PreparedStatement query = c.prepareStatement(queryString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			ResultSet countSet = s.executeQuery(countString);
+			countSet.next();
+			int incrementingId = countSet.getInt("cnt");
+
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setInt(1, incrementingId);
+				insert.setInt(2, rs.getInt("forumthreadid"));
+				insert.setString(3, "message " + incrementingId + " body");
+				insert.setString(4, rs.getString("username"));
+				insert.setInt(5, simTime++);
+				insert.executeUpdate();
+				incrementingId++;
+			}
+			c.commit();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
+
+	private void populateLikes(int insertCount) {
+		String queryString = String.format(randomUserPlusFormatString, "message");
+		String insertString = "INSERT INTO likes VALUES(?, ?, ?)";
+		try (PreparedStatement query = c.prepareStatement(queryString);
+				PreparedStatement insert = c.prepareStatement(insertString)) {
+			query.setInt(1, insertCount);
+			ResultSet rs = query.executeQuery();
+			while (rs.next()) {
+				insert.setString(1, rs.getString("username"));
+				insert.setInt(2, rs.getInt("messageid"));
+				insert.setInt(3, simTime++);
+				insert.executeUpdate();
 			}
 			c.commit();
 		} catch (Exception e) {
