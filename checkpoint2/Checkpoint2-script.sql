@@ -1,14 +1,61 @@
 -- ============================================================================
+-- CSE 111 Fall 2026: Project Checkpoint 2 Script
+-- Project Title: LinkHyper: Information Cataloguing as Social Media
+-- Team Members: Ryan Hsiao, Sathya McKinzie
+-- File: Checkpoint2-script.sql
+-- ============================================================================
+
+-- ============================================================================
+-- SCHEMA MODIFICATIONS SINCE CHECKPOINT 1
+-- ============================================================================
+-- TODO
+-- ============================================================================
+
+-- ============================================================================
+-- MEMBER CONTRIBUTIONS SUMMARY (GROUPED AT THE TOP)
+-- ============================================================================
+-- SECTION 1: SIMPLE STATEMENTS
+-- Statement 01: Ryan Hsiao:  10%, Sathya McKinzie:  90%
+-- Statement 02: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 03: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 04: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- ...
+--
+-- SECTION 2: INTERMEDIATE STATEMENTS
+-- Statement 11: Ryan Hsiao:  20%, Sathya McKinzie:  80%
+-- Statement 12: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- ...
+--
+-- SECTION 3: COMPLEX STATEMENTS
+-- Statement 21: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 22: Ryan Hsiao:  20%, Sathya McKinzie:  80%
+-- ...
+-- ============================================================================
+
+PRAGMA foreign_keys = ON;
+.headers on
+.mode column
+
+
+-- ----------------------------------------------------------------------------
+-- Additional note: the version of db.sqlite in version control,
+-- which is the same as the version submitted to CatCourses,
+-- is one randomized result of running Populate.java and does not include
+-- the changes applied by running this file.
+-- ----------------------------------------------------------------------------
+
+-- ============================================================================
 -- SECTION 1: SIMPLE STATEMENTS (Statements 1 to 10)
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- Statement 01: Register a new use into the website
 -- Explanation: Add a new user into the user table
--- Sample user Alex, password: pass123, join time: nov 1 2026
+-- Sample user Alex, password: pass123, join time: nov 1 2026 (Unix timestamp)
 -- ----------------------------------------------------------------------------
 INSERT INTO user (username, password, jointime)
-VALUES ('Alex', 'pass123', 20261101);
+VALUES ('Alex', 'pass123', 1793563200);
 
 
 -- ----------------------------------------------------------------------------
@@ -47,17 +94,18 @@ WHERE username = 'Alex';
 -- are present in a different user's list of favorited articles
 -- User 1: Beth, User 2: Alex
 -- ----------------------------------------------------------------------------
-SELECT  count(K) / count(J)
+WITH J AS (
+    SELECT vertexID
+    FROM favorites
+    WHERE username = 'Alex'
+)
+SELECT count(*) / (SELECT COUNT(*) FROM J) AS 'Proportion of articles favorited by Alex that are also favorited by Beth'
 FROM (
     SELECT *
     FROM favorites
     WHERE username = 'Beth'
-) K, (
-    SELECT *
-    FROM favorites
-    WHERE username = 'Alex'
-) J
-WHERE K.vertexID == J.vertexID;
+) K
+WHERE K.vertexID IN J;
 
 
 -- ----------------------------------------------------------------------------
@@ -109,14 +157,11 @@ WHERE username = 'Beth';
 -- list of those which are favorited by User A
 -- User A: Alex
 -- ----------------------------------------------------------------------------
-SELECT *
-FROM (
-SELECT vertexid, count(*)
-FROM favorites
-GROUP BY vertexid
-EXCEPT
-SELECT vertexid
-FROM favorites
-WHERE username = 'Alex'
-) K limit 15;
-
+SELECT vertexname AS '15 most favorited articles EXCEPT those favorited by Alex'
+FROM (SELECT vertexid
+	FROM favorites
+	WHERE username <> 'Alex'
+	GROUP BY vertexid
+	ORDER BY COUNT(*) DESC
+	LIMIT 15)
+    NATURAL JOIN vertex;
