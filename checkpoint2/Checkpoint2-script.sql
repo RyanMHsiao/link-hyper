@@ -8,7 +8,21 @@
 -- ============================================================================
 -- SCHEMA MODIFICATIONS SINCE CHECKPOINT 1
 -- ============================================================================
--- TODO
+-- This is a long list of many minor changes.
+-- The main concepts are unchanged from the schema described in Checkpoint 1.
+-- 1. More attributes for metadata are added. This is most noticeable in the
+--    timestamp attribute added to each relation. There are also some more
+--    attributes containing textual metadata.
+-- 2. externalrecord and externaldatabase are renamed to vertex and
+--    vertex canon. linktype is now an entity called arc in a n:1 relationship
+--    with arccanon rather than just a string.
+-- 3. "isa" relationships are removed and replaced by completely separate
+--    relations for each subclass. Thus rather than message and externalrecord
+--    being subclasses of artifact, there are completely separate message and
+--    vertex relations.
+-- 4. There is no longer a designated root message in a forumthread
+-- 5. Users are now able to block users, like messages, and favorite vertexes,
+--    which is equivalent to liking an artifact in the Checkpoint 1 schema.
 -- ============================================================================
 
 -- ============================================================================
