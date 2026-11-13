@@ -34,12 +34,16 @@
 -- Statement 03: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 04: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- ...
+-- Statement 09: Ryan Hsiao:  60%, Sathya McKinzie:  40%
+-- Statement 10: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 --
 -- SECTION 2: INTERMEDIATE STATEMENTS
 -- Statement 11: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 12: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- ...
+-- Statement 19: Ryan Hsiao:  80%, Sathya McKinzie:  20%
+-- Statement 20: Ryan Hsiao:  80%, Sathya McKinzie:  20%
 --
 -- SECTION 3: COMPLEX STATEMENTS
 -- Statement 21: Ryan Hsiao:   0%, Sathya McKinzie: 100%
@@ -57,6 +61,8 @@ PRAGMA foreign_keys = ON;
 -- which is the same as the version submitted to CatCourses,
 -- is one randomized result of running Populate.java and does not include
 -- the changes applied by running this file.
+-- There may be unexpected results if the wrong  version of db.sqlite is used,
+-- most notably errors from the INSERT INTO statements from uniqueness failing
 -- ----------------------------------------------------------------------------
 
 -- ============================================================================
@@ -70,7 +76,6 @@ PRAGMA foreign_keys = ON;
 -- ----------------------------------------------------------------------------
 INSERT INTO user (username, password, jointime)
 VALUES ('Alex', 'pass123', 1793563200);
-
 
 -- ----------------------------------------------------------------------------
 -- Statement 02: User deletes account
@@ -98,6 +103,29 @@ UPDATE user
 SET password = 'newPass123'
 WHERE username = 'Alex';
 
+-- ----------------------------------------------------------------------------
+-- Statement 09: Insert a new user with the same password as Alex
+-- Explanation: This demonstrates that there is no uniqueness constraint
+-- on passwords, which would be a cybersecurity issue.
+-- ----------------------------------------------------------------------------
+INSERT INTO user (username, password, jointime)
+VALUES ('Beth', 'newPass123', 1793569995);
+
+-- ----------------------------------------------------------------------------
+-- Statement 10: Add some favorited items by Alex and Beth
+-- Explanation: INSERT INTO supports inserting multiple values at once.
+-- The uniqueness constraint is only on the username and vertexid as a pair,
+-- so there are multiple tuples with the same username and multiple with
+-- the same vertexid.
+-- ----------------------------------------------------------------------------
+INSERT INTO favorites (username, vertexid, favoritetime)
+VALUES
+	('Alex', 30, 1793570000),
+	('Alex', 31, 1793570010),
+	('Alex', 32, 1793570020),
+	('Beth', 31, 1793570030),
+	('Beth', 32, 1793570040),
+	('Beth', 33, 1793570050);
 
 -- ============================================================================
 -- SECTION 2: INTERMEDIATE STATEMENTS (Statements 11 to 20)
@@ -108,19 +136,17 @@ WHERE username = 'Alex';
 -- are present in a different user's list of favorited articles
 -- User 1: Beth, User 2: Alex
 -- ----------------------------------------------------------------------------
-WITH J AS (
-    SELECT vertexID
+WITH countJ AS (
+    SELECT COUNT(*)
     FROM favorites
     WHERE username = 'Alex'
 )
-SELECT count(*) / (SELECT COUNT(*) FROM J) AS 'Proportion of articles favorited by Alex that are also favorited by Beth'
-FROM (
-    SELECT *
-    FROM favorites
-    WHERE username = 'Beth'
-) K
-WHERE K.vertexID IN J;
-
+SELECT 1.0 * count(*) / (SELECT * FROM countJ) AS 'Proportion of articles favorited by Alex that are also favorited by Beth'
+FROM favorites AS K, favorites AS J
+WHERE 
+	K.username = 'Beth' AND
+	J.username = 'Alex' AND
+	K.vertexID = J.vertexID;
 
 -- ----------------------------------------------------------------------------
 -- Statement 12: View most favorited vertex among users who follow them
@@ -146,6 +172,39 @@ FROM forumthread F
 JOIN message M ON F.forumthreadid = M.forumthreadid
 GROUP BY F.forumthreadid
 ORDER BY count(DISTINCT poster) DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 19: Find users who have created a forumthread and follow other
+-- users who have created a forumthread
+-- Explanation: Grouping by the follower, who must have started at least one
+-- forumthread, count how many forumthreads are created by followed users.
+-- This does not include hanging tuples, so all users found have created a
+-- forumthread and follow a user who has created a forumthread.
+-- ----------------------------------------------------------------------------
+SELECT follower AS 'active social users'
+FROM follows, forumthread AS T1, forumthread AS T2
+WHERE
+	follower = T1.originalposter AND
+	followinguser = T2.originalposter
+GROUP BY follower
+ORDER BY COUNT(*) DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 20: Get 10 most recent messages in a forumthread created by
+-- either user 31 or any user followed by user 31
+-- Explanation: Checks the forumthread associated with each message and
+-- checks if the creator of the thread is followed by user 31 or user 31.
+-- 10 most recent results given by sorting by descending timestamp
+-- ----------------------------------------------------------------------------
+SELECT DISTINCT poster AS 'message by', content, posttime, originalposter AS 'in thread created by'
+FROM message, forumthread, follows
+WHERE
+    (originalposter = follower OR
+        originalposter = followinguser) AND
+    message.forumthreadid = forumthread.forumthreadid AND
+    follower = 'user 31'
+ORDER BY posttime DESC
+LIMIT 10;
 
 -- ============================================================================
 -- SECTION 3: COMPLEX STATEMENTS (Statements 21 to 30)
