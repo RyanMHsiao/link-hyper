@@ -33,17 +33,25 @@
 -- Statement 02: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 03: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 04: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 05: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 06: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 07: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- ...
 --
 -- SECTION 2: INTERMEDIATE STATEMENTS
 -- Statement 11: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 12: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 14: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 15: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- ...
 --
 -- SECTION 3: COMPLEX STATEMENTS
 -- Statement 21: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 22: Ryan Hsiao:  20%, Sathya McKinzie:  80%
+-- Statement 23: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 24: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 25: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- ...
 -- ============================================================================
 
@@ -98,6 +106,32 @@ UPDATE user
 SET password = 'newPass123'
 WHERE username = 'Alex';
 
+-- ----------------------------------------------------------------------------
+-- Statement 05: Retrive all users who joined in November 2026
+-- Explanation: Searches through all users join dates, and retrieves those which
+-- have a join date in November 2026
+-- ----------------------------------------------------------------------------
+SELECT username
+FROM user
+WHERE joindate > 1793491199, joindate < 1796083200; 
+
+-- ----------------------------------------------------------------------------
+-- Statement 06: List all forum threads
+-- Explanation: List all forum threads by creation date
+-- ----------------------------------------------------------------------------
+SELECT forumthreadname
+FROM forumthread
+ORDER BY createtime DESC
+
+-- ----------------------------------------------------------------------------
+-- Statement 07: List each user's follower count
+-- Explanation: List each user's follower count in descending order
+-- ----------------------------------------------------------------------------
+SELECT followinguser, count(*)
+FROM follows
+GROUP BY followinguser
+ORDER BY count(*) DESC
+
 
 -- ============================================================================
 -- SECTION 2: INTERMEDIATE STATEMENTS (Statements 11 to 20)
@@ -147,6 +181,29 @@ JOIN message M ON F.forumthreadid = M.forumthreadid
 GROUP BY F.forumthreadid
 ORDER BY count(DISTINCT poster) DESC;
 
+-- ----------------------------------------------------------------------------
+-- Statement 14: Retrieve all messages posted by users who joined in November 2026
+-- Explanation: Joins user and message tables, and lists all messages posted
+-- by users who have a join date in November 2026
+-- ----------------------------------------------------------------------------
+SELECT content
+FROM user
+JOIN message ON poster = username
+WHERE joindate > 1793491199, joindate < 1796083200
+ORDER BY posttime DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 15: Lists number of likes and favorites by each user
+-- Explanation: Joins user with favorite and likes table
+-- Counts how many favorites/likes each user has
+-- ----------------------------------------------------------------------------
+SELECT U.username, count(vertexid), count(messageid)
+FROM user U
+JOIN favorites F ON U.username = F.username
+JOIN likes L ON L.username = U.username
+GROUP BY U.username
+
+
 -- ============================================================================
 -- SECTION 3: COMPLEX STATEMENTS (Statements 21 to 30)
 -- ============================================================================
@@ -178,4 +235,46 @@ FROM (SELECT vertexid
 	GROUP BY vertexid
 	ORDER BY COUNT(*) DESC
 	LIMIT 15)
-    NATURAL JOIN vertex;
+    NATURAL JOIN vertex);
+
+-- ----------------------------------------------------------------------------
+-- Statement 23: List users who have at least 5 followers, and have favorited at least one article 
+-- Explanation: See users who meet both the criteria of having at least 5 followers, while also favoriting at least one article
+-- ----------------------------------------------------------------------------
+SELECT username 
+FROM (SELECT followinguser AS 'username', count(*) AS 'followers')
+FROM follows
+GROUP BY username) U
+FROM U
+WHERE followers > 4
+INTERSECT
+SELECT DISTINCT username
+FROM favorites;
+
+-- ----------------------------------------------------------------------------
+-- Statement 24: List users who have at least 10 followers, who are not blocked by at least 3 people
+-- Explanation: See users who meet the criteria of having at least 10 followers, while not being blocked by at least 3 people
+-- ----------------------------------------------------------------------------
+SELECT username 
+FROM (SELECT followinguser AS 'username', count(*) AS 'followers')
+FROM follows
+GROUP BY username) U
+FROM U
+WHERE followers > 9
+EXCEPT 
+SELECT username 
+FROM (SELECT blocking AS 'username', count(*) AS 'blocked')
+FROM block
+GROUP BY username) K
+FROM K
+WHERE blocked < 3
+
+-- ----------------------------------------------------------------------------
+-- Statement 25: List creators of forum threads, and whether they have secure or insure passwords through case variable
+-- Explanation: Join username and forumthread, and if a secure password (11+ characters) assign secure, if less characters, assign insecure
+-- ----------------------------------------------------------------------------
+SELECT DISTINCT U.username, (CASE WHEN LENGTH(U.password) > 10 THEN 'secure' ELSE 'insecure') AS 'security of password'
+FROM user U
+JOIN forumthread F ON U.username = F.originalposter
+
+
