@@ -42,6 +42,7 @@
 -- Statement 12: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- ...
+-- Statement 18: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 19: Ryan Hsiao:  80%, Sathya McKinzie:  20%
 -- Statement 20: Ryan Hsiao:  80%, Sathya McKinzie:  20%
 --
@@ -49,6 +50,10 @@
 -- Statement 21: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 22: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- ...
+-- Statement 28: Ryan Hsiao: 100%, Sathya McKinzie:   0%
+-- Statement 28: Ryan Hsiao:  90%, Sathya McKinzie:  10%
+-- Statement 29: Ryan Hsiao:  80%, Sathya McKinzie:  20%
+-- Statement 30: Ryan Hsiao: 100%, Sathya McKinzie:   0%
 -- ============================================================================
 
 PRAGMA foreign_keys = ON;
@@ -174,6 +179,20 @@ GROUP BY F.forumthreadid
 ORDER BY count(DISTINCT poster) DESC;
 
 -- ----------------------------------------------------------------------------
+-- Statement 18: Find users who have sent messages in a forumthread made
+-- by a user who has blocked them.
+-- Explanation: Iterating through all the tuples in block, check for whether
+-- there is an applicable case where the forumthread and message are from
+-- the two people in the block tuple.
+-- ----------------------------------------------------------------------------
+SELECT blocker, blocking, message.messageid
+FROM forumthread, block, message
+WHERE
+    forumthread.forumthreadid = message.forumthreadid AND
+    originalposter = blocker AND
+    message.poster = blocking;
+
+-- ----------------------------------------------------------------------------
 -- Statement 19: Find users who have created a forumthread and follow other
 -- users who have created a forumthread
 -- Explanation: Grouping by the follower, who must have started at least one
@@ -238,3 +257,82 @@ FROM (SELECT vertexid
 	ORDER BY COUNT(*) DESC
 	LIMIT 15)
     NATURAL JOIN vertex;
+
+-- ----------------------------------------------------------------------------
+-- Statement 27: Displays messages with the most repeated end digits for
+-- the posttime, which is similar to the imageboard tradition of observing
+-- repeated digits in post numbers.
+-- Explanation: SQLite string functions are used together to count the number
+-- of repeated digits, and that number is then sorted. The way the repeated
+-- digits are counted is by seeing how many characters are removed when
+-- the value of the rightmost digit is trimmed from the text representation
+-- of the timestamp as Unix epoch time.
+-- ----------------------------------------------------------------------------
+SELECT
+	CASE consecutive
+		WHEN 1 THEN '...'
+		ELSE 'Nice ' || consecutive || 'x repeated end digits!'
+	END AS 'consecutive message', posttime, content, poster, messageid
+FROM (SELECT * FROM (SELECT
+		LENGTH(posttime) - LENGTH(RTRIM(posttime, SUBSTR(posttime, -1, 1))) AS consecutive,
+		posttime, content, poster, messageid
+	FROM message
+	ORDER BY consecutive DESC
+	LIMIT 10)
+	UNION
+	SELECT * FROM (SELECT
+		LENGTH(posttime) - LENGTH(RTRIM(posttime, SUBSTR(posttime, -1, 1))) AS consecutive,
+		posttime, content, poster, messageid
+	FROM message
+	ORDER BY RANDOM()
+	LIMIT 5));
+
+-- ----------------------------------------------------------------------------
+-- Statement 28: Displays a list of notifications of different types of events
+-- Explanation: The different types of data from the three relations are
+-- converted to the common format of a string and a timestamp, which means
+-- they can be combined through UNION to be displayed together.
+-- In an application 'user 31' would be replaced by a scalar query.
+-- ----------------------------------------------------------------------------
+SELECT *
+FROM (SELECT 'Like received from ' || username AS notification, liketime AS stamp
+		FROM likes NATURAL JOIN message
+		WHERE poster = 'user 31'
+	UNION SELECT 'Follow received from ' || follower AS notification, followtime AS stamp
+		FROM follows
+		WHERE followinguser = 'user 31'
+	UNION SELECT 'Favorite received from ' || username AS notification, favoritetime AS stamp
+		FROM favorites NATURAL JOIN vertex
+		WHERE cataloguer = 'user 31')
+ORDER BY stamp DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 29: Redact messages in a creator's forumthread after the poster
+-- has been blocked.
+-- Explanation: The approach of updating the message and replacing the content
+-- is taken rather than deletion in order to avoid complicating the process
+-- to generate messageid values and to avoid invalidating other tuples
+-- ----------------------------------------------------------------------------
+UPDATE message
+SET content='message from blocked user'
+WHERE EXISTS (SELECT *
+	FROM forumthread, block
+	WHERE
+		forumthread.forumthreadid = message.forumthreadid AND
+		originalposter = blocker AND
+		message.poster = blocking AND
+		posttime >= blocktime);
+
+-- ----------------------------------------------------------------------------
+-- Statement 30: Add a root message to each forumthread
+-- Explanation: Adds one new message for each forumthread tuple.
+-- The timestamp is set to the same time as the creation of the forumthread,
+-- which is not exactly true but it makes the root message the first
+-- chronologically within the thread.
+-- ----------------------------------------------------------------------------
+INSERT INTO message (messageid, forumthreadid, content, poster, posttime)
+WITH countmessage AS (SELECT COUNT(*) FROM message)
+SELECT
+	(SELECT * FROM countmessage) + ROW_NUMBER() OVER (ORDER BY createtime) - 1,
+	forumthreadid, 'root message of ' || forumthreadname, originalposter, createtime
+FROM forumthread;
