@@ -42,6 +42,7 @@
 -- Statement 12: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- ...
+-- Statement 17: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 18: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 19: Ryan Hsiao:  80%, Sathya McKinzie:  20%
 -- Statement 20: Ryan Hsiao:  80%, Sathya McKinzie:  20%
@@ -50,7 +51,7 @@
 -- Statement 21: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 22: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- ...
--- Statement 28: Ryan Hsiao: 100%, Sathya McKinzie:   0%
+-- Statement 27: Ryan Hsiao: 100%, Sathya McKinzie:   0%
 -- Statement 28: Ryan Hsiao:  90%, Sathya McKinzie:  10%
 -- Statement 29: Ryan Hsiao:  80%, Sathya McKinzie:  20%
 -- Statement 30: Ryan Hsiao: 100%, Sathya McKinzie:   0%
@@ -146,7 +147,7 @@ WITH countJ AS (
     FROM favorites
     WHERE username = 'Alex'
 )
-SELECT 1.0 * count(*) / (SELECT * FROM countJ) AS 'Proportion of articles favorited by Alex that are also favorited by Beth'
+SELECT (100.0 * count(*) / (SELECT * FROM countJ)) || '%' AS '% favorited by Alex also favorited by Beth'
 FROM favorites AS K, favorites AS J
 WHERE 
 	K.username = 'Beth' AND
@@ -177,6 +178,25 @@ FROM forumthread F
 JOIN message M ON F.forumthreadid = M.forumthreadid
 GROUP BY F.forumthreadid
 ORDER BY count(DISTINCT poster) DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 17: Calculate a relevance score for internallinks by multiplying
+-- the number of forumthreads started about that internallink with the number
+-- of times the fromvertex of the internallink has been favorited.
+-- Explanation: This relevance score takes advantage of a quirk of
+-- many-to-many relationships, that being that the count of tuples from
+-- the cartesian product is the arithmetic product.
+-- ----------------------------------------------------------------------------
+SELECT
+	forumthread.internallinkid AS 'internallink id',
+	COUNT(*) AS 'relevance score'
+FROM forumthread, internallink, favorites
+WHERE
+	forumthread.internallinkid = internallink.internallinkid AND
+	fromvertexid = favorites.vertexid
+GROUP BY forumthread.internallinkid
+ORDER BY COUNT(*) DESC
+LIMIT 10;
 
 -- ----------------------------------------------------------------------------
 -- Statement 18: Find users who have sent messages in a forumthread made
