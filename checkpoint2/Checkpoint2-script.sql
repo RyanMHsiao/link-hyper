@@ -36,7 +36,7 @@
 -- Statement 05: Ryan Hsiao:  10%, Sathya McKinzie:  90%
 -- Statement 06: Ryan Hsiao:  10%, Sathya McKinzie:  90%
 -- Statement 07: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- ...
+-- Statement 08: Ryan Hsiao: 100%, Sathya McKinzie:   0%
 -- Statement 09: Ryan Hsiao:  60%, Sathya McKinzie:  40%
 -- Statement 10: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 --
@@ -46,7 +46,7 @@
 -- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 14: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 15: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- ...
+-- Statement 16: Ryan Hsiao:  90%, Sathya McKinzie:  10%
 -- Statement 17: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 18: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 19: Ryan Hsiao:  80%, Sathya McKinzie:  20%
@@ -58,7 +58,7 @@
 -- Statement 23: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 24: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 25: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- ...
+-- Statement 26: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 27: Ryan Hsiao: 100%, Sathya McKinzie:   0%
 -- Statement 28: Ryan Hsiao:  90%, Sathya McKinzie:  10%
 -- Statement 29: Ryan Hsiao:  80%, Sathya McKinzie:  20%
@@ -77,6 +77,8 @@ PRAGMA foreign_keys = ON;
 -- the changes applied by running this file.
 -- There may be unexpected results if the wrong  version of db.sqlite is used,
 -- most notably errors from the INSERT INTO statements from uniqueness failing
+-- All the code used is documented in the GitHub repository in this folder:
+-- https://github.com/RyanMHsiao/link-hyper/tree/main/checkpoint2
 -- ----------------------------------------------------------------------------
 
 -- ============================================================================
@@ -143,12 +145,28 @@ GROUP BY followinguser
 ORDER BY count(*) DESC;
 
 -- ----------------------------------------------------------------------------
+-- Statement 08: Show some cases of chained internallinks
+-- Explanation: We find all cases in which there are two internal links with
+-- the tovertex of one being the fromvertex of the other.
+-- This is a chain structure that emerges naturally from a graph.
+-- ----------------------------------------------------------------------------
+SELECT
+	il1.fromvertexid AS 'vertex 1',
+	il1.tovertexid AS 'vertex 2',
+	il2.tovertexid AS 'vertex 3'
+FROM internallink AS il1, internallink AS il2
+WHERE il1.tovertexid = il2.fromvertexid
+LIMIT 15;
+
+-- ----------------------------------------------------------------------------
 -- Statement 09: Insert a new user with the same password as Alex
 -- Explanation: This demonstrates that there is no uniqueness constraint
 -- on passwords, which would be a cybersecurity issue.
 -- ----------------------------------------------------------------------------
 INSERT INTO user (username, password, jointime)
-VALUES ('Beth', 'newPass123', 1793569995);
+VALUES
+	('Alex', 'newPass123', 1793569995),
+	('Beth', 'newPass123', 1793569995);
 
 -- ----------------------------------------------------------------------------
 -- Statement 10: Add some favorited items by Alex and Beth
@@ -233,6 +251,20 @@ FROM user U
 JOIN favorites F ON U.username = F.username
 JOIN likes L ON L.username = U.username
 GROUP BY U.username;
+
+-- ----------------------------------------------------------------------------
+-- Statement 16: Set a certain set of arcs to be described as deprecated
+-- without invalidating any tuples like a deletion might.
+-- Explanation: This is a demonstration of the use of UPDATE to change the
+-- value of many tuples at once based on some given condition.
+-- There is enough information contained in the arc relation to do this.
+-- ----------------------------------------------------------------------------
+UPDATE arc
+SET arcdescription="This arc is deprecated and should no longer be used."
+WHERE 
+	arccanonid = 0 AND
+	createtime < 1794395697 AND
+	MOD(arcid, 3) > 0;
 
 -- ----------------------------------------------------------------------------
 -- Statement 17: Calculate a relevance score for internallinks by multiplying
@@ -359,12 +391,39 @@ FROM block
 GROUP BY username
 HAVING COUNT(*) < 3;
 
+-- ----------------------------------------------------------------------------
 -- Statement 25: List creators of forum threads, and whether they have secure or insure passwords through case variable
 -- Explanation: Join username and forumthread, and if a secure password (11+ characters) assign secure, if less characters, assign insecure
 -- ----------------------------------------------------------------------------
 SELECT DISTINCT U.username, (CASE WHEN LENGTH(U.password) > 10 THEN 'secure' ELSE 'insecure' END) AS 'security of password'
 FROM user U
 JOIN forumthread F ON U.username = F.originalposter;
+
+-- ----------------------------------------------------------------------------
+-- Statement 26: Calculate scores of activity from positive and negative
+-- interactions with the service based on the number of favorited vertexes
+-- and both the number of followed and blocked user accounts.
+-- Explanation: The score is calculated by multiplying the number of
+-- favorites multiplied by the number of users followed or blocked. This could
+-- be changed slightly by adding the condition that the vertex must be
+-- catalogued by a followed or blocked user, which would show the degree of
+-- correlation between following, blocking, and favoriting the vertex.
+-- ----------------------------------------------------------------------------
+WITH countpos AS (SELECT follower AS username, COUNT(*) AS countpos
+FROM follows, favorites, vertex
+WHERE
+    follower = favorites.username AND
+    favorites.vertexid = vertex.vertexid
+GROUP BY follower
+),
+countneg AS (SELECT blocker AS username, COUNT(*) AS countneg
+FROM block, favorites, vertex
+WHERE
+    blocker = favorites.username AND
+    favorites.vertexid = vertex.vertexid
+GROUP BY blocker)
+SELECT username, countpos, countneg
+FROM user NATURAL JOIN countpos NATURAL JOIN countneg;
 
 -- ----------------------------------------------------------------------------
 -- Statement 27: Displays messages with the most repeated end digits for
@@ -392,7 +451,6 @@ FROM (SELECT * FROM (SELECT
 		LENGTH(posttime) - LENGTH(RTRIM(posttime, SUBSTR(posttime, -1, 1))) AS consecutive,
 		posttime, content, poster, messageid
 	FROM message
-	ORDER BY RANDOM()
 	LIMIT 5));
 
 -- ----------------------------------------------------------------------------
