@@ -1,2 +1,3 @@
 sqlite-jdbc-*.jar
 checkpoint2/*.class
+checkpoint2/db.sqlite.backup
