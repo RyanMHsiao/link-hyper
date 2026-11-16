@@ -36,7 +36,7 @@
 -- Statement 05: Ryan Hsiao:  10%, Sathya McKinzie:  90%
 -- Statement 06: Ryan Hsiao:  10%, Sathya McKinzie:  90%
 -- Statement 07: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- ...
+-- Statement 08: Ryan Hsiao:  40%, Sathya McKinzie:  60%
 -- Statement 09: Ryan Hsiao:  60%, Sathya McKinzie:  40%
 -- Statement 10: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 --
@@ -46,7 +46,7 @@
 -- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 14: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 15: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- ...
+-- Statement 16: Ryan Hsiao:  40%, Sathya McKinzie:  60%
 -- Statement 17: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 18: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 -- Statement 19: Ryan Hsiao:  80%, Sathya McKinzie:  20%
@@ -58,7 +58,7 @@
 -- Statement 23: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 24: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 25: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- ...
+-- Statement 26: Ryan Hsiao:  40%, Sathya McKinzie:  60%
 -- Statement 27: Ryan Hsiao: 100%, Sathya McKinzie:   0%
 -- Statement 28: Ryan Hsiao:  90%, Sathya McKinzie:  10%
 -- Statement 29: Ryan Hsiao:  80%, Sathya McKinzie:  20%
@@ -141,6 +141,14 @@ SELECT followinguser, count(*)
 FROM follows
 GROUP BY followinguser
 ORDER BY count(*) DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 08: List all messages sent on the forum
+-- Explanation: List every message sent on the forum based on the time sent
+-- ----------------------------------------------------------------------------
+SELECT message, posttime AS 'post time in unix'
+FROM message
+ORDER BY posttime DESC;
 
 -- ----------------------------------------------------------------------------
 -- Statement 09: Insert a new user with the same password as Alex
@@ -233,6 +241,16 @@ FROM user U
 JOIN favorites F ON U.username = F.username
 JOIN likes L ON L.username = U.username
 GROUP BY U.username;
+
+-- ----------------------------------------------------------------------------
+-- Statement 16: Count how many messages each user has sent, and how many unique forums they have sent them in
+-- Explanation: Join the message and forumthread tables, and track how many forums a user has posted in, and how many 
+-- total messages they have sent in the forums
+-- ----------------------------------------------------------------------------
+SELECT poster, count(DISTINCT F.forumthreadid), count(M.messageid)
+FROM message M
+JOIN forumthread F ON F.forumthreadid = M.forumthreadid
+GROUP BY poster;
 
 -- ----------------------------------------------------------------------------
 -- Statement 17: Calculate a relevance score for internallinks by multiplying
@@ -359,12 +377,23 @@ FROM block
 GROUP BY username
 HAVING COUNT(*) < 3;
 
+-- ----------------------------------------------------------------------------
 -- Statement 25: List creators of forum threads, and whether they have secure or insure passwords through case variable
 -- Explanation: Join username and forumthread, and if a secure password (11+ characters) assign secure, if less characters, assign insecure
 -- ----------------------------------------------------------------------------
 SELECT DISTINCT U.username, (CASE WHEN LENGTH(U.password) > 10 THEN 'secure' ELSE 'insecure' END) AS 'security of password'
 FROM user U
 JOIN forumthread F ON U.username = F.originalposter;
+
+-- ----------------------------------------------------------------------------
+-- Statement 26: List top 10 most active members of forum threads by message count, and whether they have created a thread or not
+-- Explanation: Join message and forumthread tables, and find who are the top 10 users in message count. Then using Case see
+-- which have created a forum thread
+-- ----------------------------------------------------------------------------
+SELECT poster, count(M.messageid), (CASE WHEN (originalposter = poster) THEN 'true' ELSE 'false' END) AS 'created a post'
+FROM message M
+JOIN forumthread F ON F.forumthreadid = M.forumthreadid
+GROUP BY poster;
 
 -- ----------------------------------------------------------------------------
 -- Statement 27: Displays messages with the most repeated end digits for
