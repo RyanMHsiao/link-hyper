@@ -393,7 +393,9 @@ JOIN forumthread F ON U.username = F.originalposter;
 SELECT poster, count(M.messageid), (CASE WHEN (originalposter = poster) THEN 'true' ELSE 'false' END) AS 'created a post'
 FROM message M
 JOIN forumthread F ON F.forumthreadid = M.forumthreadid
-GROUP BY poster;
+GROUP BY poster
+ORDER BY count(M.messageid) DESC
+Limit 10;
 
 -- ----------------------------------------------------------------------------
 -- Statement 27: Displays messages with the most repeated end digits for
