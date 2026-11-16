@@ -36,33 +36,36 @@
 -- Statement 05: Ryan Hsiao:  10%, Sathya McKinzie:  90%
 -- Statement 06: Ryan Hsiao:  10%, Sathya McKinzie:  90%
 -- Statement 07: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- Statement 08: Ryan Hsiao: 100%, Sathya McKinzie:   0%
--- Statement 09: Ryan Hsiao:  60%, Sathya McKinzie:  40%
--- Statement 10: Ryan Hsiao:  70%, Sathya McKinzie:  30%
+-- Statement 08: Ryan Hsiao:  40%, Sathya McKinzie:  60%
+-- Statement 09: Ryan Hsiao: 100%, Sathya McKinzie:   0%
+-- Statement 10: Ryan Hsiao:  60%, Sathya McKinzie:  40%
+-- Statement 11: Ryan Hsiao:  70%, Sathya McKinzie:  30%
 --
 -- SECTION 2: INTERMEDIATE STATEMENTS
--- Statement 11: Ryan Hsiao:  20%, Sathya McKinzie:  80%
--- Statement 12: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 12: Ryan Hsiao:  20%, Sathya McKinzie:  80%
 -- Statement 13: Ryan Hsiao:   0%, Sathya McKinzie: 100%
--- Statement 14: Ryan Hsiao:  20%, Sathya McKinzie:  80%
--- Statement 15: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- Statement 16: Ryan Hsiao:  90%, Sathya McKinzie:  10%
--- Statement 17: Ryan Hsiao:  70%, Sathya McKinzie:  30%
--- Statement 18: Ryan Hsiao:  70%, Sathya McKinzie:  30%
--- Statement 19: Ryan Hsiao:  80%, Sathya McKinzie:  20%
--- Statement 20: Ryan Hsiao:  80%, Sathya McKinzie:  20%
+-- Statement 14: Ryan Hsiao:   0%, Sathya McKinzie: 100%
+-- Statement 15: Ryan Hsiao:  20%, Sathya McKinzie:  80%
+-- Statement 16: Ryan Hsiao:  10%, Sathya McKinzie:  90%
+-- Statement 17: Ryan Hsiao:  90%, Sathya McKinzie:  10%
+-- Statement 18: Ryan Hsiao:  40%, Sathya McKinzie:  60%
+-- Statement 19: Ryan Hsiao:  70%, Sathya McKinzie:  30%
+-- Statement 20: Ryan Hsiao:  70%, Sathya McKinzie:  30%
+-- Statement 21: Ryan Hsiao:  80%, Sathya McKinzie:  20%
+-- Statement 22: Ryan Hsiao:  80%, Sathya McKinzie:  20%
 --
 -- SECTION 3: COMPLEX STATEMENTS
--- Statement 21: Ryan Hsiao:   0%, Sathya McKinzie: 100%
--- Statement 22: Ryan Hsiao:  20%, Sathya McKinzie:  80%
--- Statement 23: Ryan Hsiao:  20%, Sathya McKinzie:  80%
+-- Statement 23: Ryan Hsiao:   0%, Sathya McKinzie: 100%
 -- Statement 24: Ryan Hsiao:  20%, Sathya McKinzie:  80%
--- Statement 25: Ryan Hsiao:  10%, Sathya McKinzie:  90%
--- Statement 26: Ryan Hsiao:  70%, Sathya McKinzie:  30%
--- Statement 27: Ryan Hsiao: 100%, Sathya McKinzie:   0%
--- Statement 28: Ryan Hsiao:  90%, Sathya McKinzie:  10%
--- Statement 29: Ryan Hsiao:  80%, Sathya McKinzie:  20%
+-- Statement 25: Ryan Hsiao:  20%, Sathya McKinzie:  80%
+-- Statement 26: Ryan Hsiao:  20%, Sathya McKinzie:  80%
+-- Statement 27: Ryan Hsiao:  10%, Sathya McKinzie:  90%
+-- Statement 28: Ryan Hsiao:  70%, Sathya McKinzie:  30%
+-- Statement 29: Ryan Hsiao:  40%, Sathya McKinzie:  60%
 -- Statement 30: Ryan Hsiao: 100%, Sathya McKinzie:   0%
+-- Statement 31: Ryan Hsiao:  90%, Sathya McKinzie:  10%
+-- Statement 32: Ryan Hsiao:  80%, Sathya McKinzie:  20%
+-- Statement 33: Ryan Hsiao: 100%, Sathya McKinzie:   0%
 -- ============================================================================
 
 PRAGMA foreign_keys = ON;
@@ -82,7 +85,7 @@ PRAGMA foreign_keys = ON;
 -- ----------------------------------------------------------------------------
 
 -- ============================================================================
--- SECTION 1: SIMPLE STATEMENTS (Statements 1 to 10)
+-- SECTION 1: SIMPLE STATEMENTS (Statements 1 to 11)
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -145,7 +148,15 @@ GROUP BY followinguser
 ORDER BY count(*) DESC;
 
 -- ----------------------------------------------------------------------------
--- Statement 08: Show some cases of chained internallinks
+-- Statement 08: List all messages sent on the forum
+-- Explanation: List every message sent on the forum based on the time sent
+-- ----------------------------------------------------------------------------
+SELECT message, posttime AS 'post time in unix'
+FROM message
+ORDER BY posttime DESC;
+
+-- ----------------------------------------------------------------------------
+-- Statement 09: Show some cases of chained internallinks
 -- Explanation: We find all cases in which there are two internal links with
 -- the tovertex of one being the fromvertex of the other.
 -- This is a chain structure that emerges naturally from a graph.
@@ -159,7 +170,7 @@ WHERE il1.tovertexid = il2.fromvertexid
 LIMIT 15;
 
 -- ----------------------------------------------------------------------------
--- Statement 09: Insert a new user with the same password as Alex
+-- Statement 10: Insert a new user with the same password as Alex
 -- Explanation: This demonstrates that there is no uniqueness constraint
 -- on passwords, which would be a cybersecurity issue.
 -- ----------------------------------------------------------------------------
@@ -169,7 +180,7 @@ VALUES
 	('Beth', 'newPass123', 1793569995);
 
 -- ----------------------------------------------------------------------------
--- Statement 10: Add some favorited items by Alex and Beth
+-- Statement 11: Add some favorited items by Alex and Beth
 -- Explanation: INSERT INTO supports inserting multiple values at once.
 -- The uniqueness constraint is only on the username and vertexid as a pair,
 -- so there are multiple tuples with the same username and multiple with
@@ -185,10 +196,10 @@ VALUES
 	('Beth', 33, 1793570050);
 
 -- ============================================================================
--- SECTION 2: INTERMEDIATE STATEMENTS (Statements 11 to 20)
+-- SECTION 2: INTERMEDIATE STATEMENTS (Statements 12 to 22)
 -- ============================================================================
 -- ----------------------------------------------------------------------------
--- Statement 11: Compare % of articles which someone favorited matches someone else's list
+-- Statement 12: Compare % of articles which someone favorited matches someone else's list
 -- Explanation: Goes through a user's list of favorited articles, and see which of those
 -- are present in a different user's list of favorited articles
 -- User 1: Beth, User 2: Alex
@@ -206,7 +217,7 @@ WHERE
 	K.vertexID = J.vertexID;
 
 -- ----------------------------------------------------------------------------
--- Statement 12: View most favorited vertex among users who follow them
+-- Statement 13: View most favorited vertex among users who follow them
 -- Explanation: Goes through a user's follower list, and retrives all vertex
 -- then groups and sorts them by how frequent they appear
 -- User: Alex
@@ -220,7 +231,7 @@ WHERE U.username == 'Alex'
 GROUP BY V.vertexname;
 
 -- ----------------------------------------------------------------------------
--- Statement 13: Count how many distinct users are in each forum thread
+-- Statement 14: Count how many distinct users are in each forum thread
 -- Explanation: Joins message table with forum table, and count how many distinct users
 -- posted in each forum, descending in count
 -- ----------------------------------------------------------------------------
@@ -231,7 +242,7 @@ GROUP BY F.forumthreadid
 ORDER BY count(DISTINCT poster) DESC;
 
 -- ----------------------------------------------------------------------------
--- Statement 14: Retrieve all messages posted by users who joined in November 2026
+-- Statement 15: Retrieve all messages posted by users who joined in November 2026
 -- Explanation: Joins user and message tables, and lists all messages posted
 -- by users who have a join date in November 2026
 -- ----------------------------------------------------------------------------
@@ -242,7 +253,7 @@ WHERE jointime > 1793491199 AND jointime < 1796083200
 ORDER BY posttime DESC;
 
 -- ----------------------------------------------------------------------------
--- Statement 15: Lists number of likes and favorites by each user
+-- Statement 16: Lists number of likes and favorites by each user
 -- Explanation: Joins user with favorite and likes table
 -- Counts how many favorites/likes each user has
 -- ----------------------------------------------------------------------------
@@ -253,7 +264,17 @@ JOIN likes L ON L.username = U.username
 GROUP BY U.username;
 
 -- ----------------------------------------------------------------------------
--- Statement 16: Set a certain set of arcs to be described as deprecated
+-- Statement 17: Count how many messages each user has sent, and how many unique forums they have sent them in
+-- Explanation: Join the message and forumthread tables, and track how many forums a user has posted in, and how many 
+-- total messages they have sent in the forums
+-- ----------------------------------------------------------------------------
+SELECT poster, count(DISTINCT F.forumthreadid), count(M.messageid)
+FROM message M
+JOIN forumthread F ON F.forumthreadid = M.forumthreadid
+GROUP BY poster;
+
+-- ----------------------------------------------------------------------------
+-- Statement 18: Set a certain set of arcs to be described as deprecated
 -- without invalidating any tuples like a deletion might.
 -- Explanation: This is a demonstration of the use of UPDATE to change the
 -- value of many tuples at once based on some given condition.
@@ -267,7 +288,7 @@ WHERE
 	MOD(arcid, 3) > 0;
 
 -- ----------------------------------------------------------------------------
--- Statement 17: Calculate a relevance score for internallinks by multiplying
+-- Statement 19: Calculate a relevance score for internallinks by multiplying
 -- the number of forumthreads started about that internallink with the number
 -- of times the fromvertex of the internallink has been favorited.
 -- Explanation: This relevance score takes advantage of a quirk of
@@ -286,7 +307,7 @@ ORDER BY COUNT(*) DESC
 LIMIT 10;
 
 -- ----------------------------------------------------------------------------
--- Statement 18: Find users who have sent messages in a forumthread made
+-- Statement 20: Find users who have sent messages in a forumthread made
 -- by a user who has blocked them.
 -- Explanation: Iterating through all the tuples in block, check for whether
 -- there is an applicable case where the forumthread and message are from
@@ -300,7 +321,7 @@ WHERE
     message.poster = blocking;
 
 -- ----------------------------------------------------------------------------
--- Statement 19: Find users who have created a forumthread and follow other
+-- Statement 21: Find users who have created a forumthread and follow other
 -- users who have created a forumthread
 -- Explanation: Grouping by the follower, who must have started at least one
 -- forumthread, count how many forumthreads are created by followed users.
@@ -316,7 +337,7 @@ GROUP BY follower
 ORDER BY COUNT(*) DESC;
 
 -- ----------------------------------------------------------------------------
--- Statement 20: Get 10 most recent messages in a forumthread created by
+-- Statement 22: Get 10 most recent messages in a forumthread created by
 -- either user 31 or any user followed by user 31
 -- Explanation: Checks the forumthread associated with each message and
 -- checks if the creator of the thread is followed by user 31 or user 31.
@@ -333,11 +354,11 @@ ORDER BY posttime DESC
 LIMIT 10;
 
 -- ============================================================================
--- SECTION 3: COMPLEX STATEMENTS (Statements 21 to 30)
+-- SECTION 3: COMPLEX STATEMENTS (Statements 23 to 33)
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Statement 21: List favorited articles by User A EXCEPT those which are not favorited by User B
+-- Statement 23: List favorited articles by User A EXCEPT those which are not favorited by User B
 -- Explanation: Compares User A's and B's favorited article list, and lists out
 -- articles favorited by User A which are not favorited by User B
 -- User A: Alex, User B: Beth
@@ -351,7 +372,7 @@ FROM favorites
 WHERE username = 'Beth';
 
 -- ----------------------------------------------------------------------------
--- Statement 22: List the top 15 most favorited articles EXCEPT those which are favorited by User A
+-- Statement 24: List the top 15 most favorited articles EXCEPT those which are favorited by User A
 -- Explanation: Create a list of the top 15 most favorited articles by anyone, which are not in the
 -- list of those which are favorited by User A
 -- User A: Alex
@@ -366,7 +387,7 @@ FROM (SELECT vertexid
     NATURAL JOIN vertex;
 
 -- ----------------------------------------------------------------------------
--- Statement 23: List users who have at least 5 followers, and have favorited at least one article 
+-- Statement 25: List users who have at least 5 followers, and have favorited at least one article 
 -- Explanation: See users who meet both the criteria of having at least 5 followers, while also favoriting at least one article
 -- ----------------------------------------------------------------------------
 SELECT followinguser AS 'username'
@@ -378,7 +399,7 @@ SELECT DISTINCT username
 FROM favorites;
 
 -- ----------------------------------------------------------------------------
--- Statement 24: List users who have at least 10 followers, who are not blocked by at least 3 people
+-- Statement 26: List users who have at least 10 followers, who are not blocked by at least 3 people
 -- Explanation: See users who meet the criteria of having at least 10 followers, while not being blocked by at least 3 people
 -- ----------------------------------------------------------------------------
 SELECT followinguser AS 'username'
@@ -392,7 +413,7 @@ GROUP BY username
 HAVING COUNT(*) < 3;
 
 -- ----------------------------------------------------------------------------
--- Statement 25: List creators of forum threads, and whether they have secure or insure passwords through case variable
+-- Statement 27: List creators of forum threads, and whether they have secure or insure passwords through case variable
 -- Explanation: Join username and forumthread, and if a secure password (11+ characters) assign secure, if less characters, assign insecure
 -- ----------------------------------------------------------------------------
 SELECT DISTINCT U.username, (CASE WHEN LENGTH(U.password) > 10 THEN 'secure' ELSE 'insecure' END) AS 'security of password'
@@ -400,7 +421,19 @@ FROM user U
 JOIN forumthread F ON U.username = F.originalposter;
 
 -- ----------------------------------------------------------------------------
--- Statement 26: Calculate scores of activity from positive and negative
+-- Statement 28: List top 10 most active members of forum threads by message count, and whether they have created a thread or not
+-- Explanation: Join message and forumthread tables, and find who are the top 10 users in message count. Then using Case see
+-- which have created a forum thread
+-- ----------------------------------------------------------------------------
+SELECT poster, count(M.messageid), (CASE WHEN (originalposter = poster) THEN 'true' ELSE 'false' END) AS 'created a post'
+FROM message M
+JOIN forumthread F ON F.forumthreadid = M.forumthreadid
+GROUP BY poster
+ORDER BY count(M.messageid) DESC
+Limit 10;
+
+-- ----------------------------------------------------------------------------
+-- Statement 29: Calculate scores of activity from positive and negative
 -- interactions with the service based on the number of favorited vertexes
 -- and both the number of followed and blocked user accounts.
 -- Explanation: The score is calculated by multiplying the number of
@@ -426,7 +459,7 @@ SELECT username, countpos, countneg
 FROM user NATURAL JOIN countpos NATURAL JOIN countneg;
 
 -- ----------------------------------------------------------------------------
--- Statement 27: Displays messages with the most repeated end digits for
+-- Statement 30: Displays messages with the most repeated end digits for
 -- the posttime, which is similar to the imageboard tradition of observing
 -- repeated digits in post numbers.
 -- Explanation: SQLite string functions are used together to count the number
@@ -454,7 +487,7 @@ FROM (SELECT * FROM (SELECT
 	LIMIT 5));
 
 -- ----------------------------------------------------------------------------
--- Statement 28: Displays a list of notifications of different types of events
+-- Statement 31: Displays a list of notifications of different types of events
 -- Explanation: The different types of data from the three relations are
 -- converted to the common format of a string and a timestamp, which means
 -- they can be combined through UNION to be displayed together.
@@ -473,7 +506,7 @@ FROM (SELECT 'Like received from ' || username AS notification, liketime AS stam
 ORDER BY stamp DESC;
 
 -- ----------------------------------------------------------------------------
--- Statement 29: Redact messages in a creator's forumthread after the poster
+-- Statement 32: Redact messages in a creator's forumthread after the poster
 -- has been blocked.
 -- Explanation: The approach of updating the message and replacing the content
 -- is taken rather than deletion in order to avoid complicating the process
@@ -490,7 +523,7 @@ WHERE EXISTS (SELECT *
 		posttime >= blocktime);
 
 -- ----------------------------------------------------------------------------
--- Statement 30: Add a root message to each forumthread
+-- Statement 33: Add a root message to each forumthread
 -- Explanation: Adds one new message for each forumthread tuple.
 -- The timestamp is set to the same time as the creation of the forumthread,
 -- which is not exactly true but it makes the root message the first
